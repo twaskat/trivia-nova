@@ -1,0 +1,1044 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>TRIVIA NOVA · AI trivia powered by Fireworks</title>
+<meta name="description" content="Endless AI-generated trivia on any topic. Bring your own Fireworks AI key." />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800;900&family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet" />
+<style>
+:root {
+  --bg: #05030f;
+  --ink: #f3f1ff;
+  --muted: #9a96c4;
+  --line: rgba(160, 140, 255, .18);
+  --glass: rgba(20, 14, 48, .55);
+  --cyan: #22e6ff;
+  --pink: #ff3fd8;
+  --violet: #8b5cff;
+  --lime: #b6ff3b;
+  --amber: #ffc93c;
+  --red: #ff4d6d;
+  --display: "Orbitron", "Space Grotesk", system-ui, sans-serif;
+  --body: "Space Grotesk", system-ui, -apple-system, Segoe UI, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, monospace;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; min-height: 100%; background: var(--bg); color: var(--ink); font-family: var(--body); }
+body { overflow-x: hidden; }
+button, input, select { font: inherit; color: inherit; }
+button { cursor: pointer; }
+[hidden] { display: none !important; }
+
+/* ---------- background ---------- */
+.sky { position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden;
+  background: radial-gradient(1200px 600px at 50% 110%, rgba(255, 63, 216, .28), transparent 60%),
+              radial-gradient(900px 500px at 10% -10%, rgba(34, 230, 255, .18), transparent 60%),
+              radial-gradient(900px 500px at 100% 0%, rgba(139, 92, 255, .25), transparent 60%),
+              linear-gradient(#05030f, #0b0524 60%, #170838); }
+.sun { position: absolute; left: 50%; bottom: 30vh; width: 46vmin; height: 46vmin; transform: translateX(-50%); border-radius: 50%;
+  background: linear-gradient(#ffe45c 10%, #ff7a3c 45%, #ff3fd8 85%);
+  -webkit-mask: linear-gradient(#000 58%, transparent 58%), repeating-linear-gradient(180deg, #000 0 10px, transparent 10px 16px);
+  mask: linear-gradient(#000 58%, transparent 58%), repeating-linear-gradient(180deg, #000 0 10px, transparent 10px 16px);
+  opacity: .42; filter: drop-shadow(0 0 60px rgba(255, 63, 216, .6)); }
+.grid { position: absolute; left: -50%; right: -50%; bottom: -10vh; height: 52vh; transform: perspective(380px) rotateX(62deg); transform-origin: 50% 0;
+  background-image: linear-gradient(rgba(255, 63, 216, .55) 2px, transparent 2px), linear-gradient(90deg, rgba(34, 230, 255, .45) 2px, transparent 2px);
+  background-size: 64px 64px; animation: gridmove 2.2s linear infinite;
+  -webkit-mask: linear-gradient(transparent, #000 35%); mask: linear-gradient(transparent, #000 35%); }
+@keyframes gridmove { to { background-position: 0 64px, 0 0; } }
+.stars { position: absolute; inset: 0 0 45% 0; background-image:
+  radial-gradient(1.5px 1.5px at 12% 22%, #fff, transparent), radial-gradient(1px 1px at 32% 12%, #fff, transparent),
+  radial-gradient(1.5px 1.5px at 52% 30%, #cdf, transparent), radial-gradient(1px 1px at 72% 18%, #fff, transparent),
+  radial-gradient(1.5px 1.5px at 88% 40%, #fdf, transparent), radial-gradient(1px 1px at 8% 48%, #fff, transparent),
+  radial-gradient(1px 1px at 62% 8%, #fff, transparent), radial-gradient(1.5px 1.5px at 42% 46%, #fff, transparent),
+  radial-gradient(1px 1px at 22% 36%, #cff, transparent), radial-gradient(1px 1px at 95% 10%, #fff, transparent);
+  animation: twinkle 4s ease-in-out infinite alternate; }
+@keyframes twinkle { from { opacity: .45; } to { opacity: 1; } }
+.scan { position: fixed; inset: 0; z-index: 50; pointer-events: none; background: repeating-linear-gradient(0deg, rgba(255,255,255,.025) 0 1px, transparent 1px 3px); mix-blend-mode: overlay; }
+canvas#fx { position: fixed; inset: 0; z-index: 40; pointer-events: none; }
+
+/* ---------- layout ---------- */
+.app { position: relative; z-index: 1; max-width: 980px; margin: 0 auto; padding: 18px 20px 60px; min-height: 100vh; display: flex; flex-direction: column; }
+header.top { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 6px 0 18px; }
+.brand { white-space: nowrap; display: flex; align-items: center; gap: 10px; font-family: var(--display); font-weight: 900; letter-spacing: .14em; font-size: 15px; background: none; border: 0; padding: 0; }
+.brand .logo { width: 30px; height: 30px; border-radius: 9px; display: grid; place-items: center; background: conic-gradient(from 200deg, var(--cyan), var(--violet), var(--pink), var(--amber), var(--cyan)); box-shadow: 0 0 22px rgba(255, 63, 216, .55); color: #12052b; font-size: 16px; }
+.top-actions { display: flex; gap: 8px; align-items: center; }
+.pill { display: inline-flex; align-items: center; gap: 8px; padding: 8px 14px; border-radius: 999px; border: 1px solid var(--line); background: rgba(10, 6, 30, .6); backdrop-filter: blur(10px); font-size: 13px; color: var(--muted); transition: .2s; }
+.pill:hover { border-color: rgba(34, 230, 255, .6); color: var(--ink); }
+.dot { width: 8px; height: 8px; border-radius: 50%; background: var(--red); box-shadow: 0 0 10px var(--red); }
+.dot.ok { background: var(--lime); box-shadow: 0 0 10px var(--lime); }
+.icon-btn { width: 38px; height: 38px; padding: 0; justify-content: center; font-size: 16px; }
+
+.screen { animation: enter .45s cubic-bezier(.2, .9, .3, 1.2); }
+@keyframes enter { from { opacity: 0; transform: translateY(14px) scale(.985); } to { opacity: 1; transform: none; } }
+.card { background: var(--glass); border: 1px solid var(--line); border-radius: 22px; backdrop-filter: blur(18px) saturate(1.3); box-shadow: 0 20px 60px rgba(0, 0, 0, .45), inset 0 1px 0 rgba(255, 255, 255, .06); }
+
+/* ---------- home ---------- */
+.hero { text-align: center; padding: 26px 0 26px; }
+.hero h1 { margin: 0; font-family: var(--display); font-weight: 900; font-size: clamp(44px, 9vw, 96px); line-height: .95; letter-spacing: .04em;
+  background: linear-gradient(180deg, #fff 0%, #ffd6f7 38%, var(--pink) 60%, var(--violet) 100%); -webkit-background-clip: text; background-clip: text; color: transparent;
+  filter: drop-shadow(0 0 18px rgba(255, 63, 216, .55)) drop-shadow(0 4px 0 rgba(34, 230, 255, .35)); }
+.hero h1 span { display: block; font-size: .5em; letter-spacing: .5em; margin-left: .5em; background: linear-gradient(90deg, var(--cyan), #fff, var(--cyan)); -webkit-background-clip: text; background-clip: text; }
+.hero p { color: var(--muted); font-size: 17px; margin: 16px auto 0; max-width: 520px; }
+.setup { padding: 26px; display: grid; gap: 22px; }
+.label { font-family: var(--mono); font-size: 11px; letter-spacing: .2em; text-transform: uppercase; color: var(--muted); margin-bottom: 10px; display: flex; justify-content: space-between; }
+.topic-wrap { position: relative; }
+.topic-wrap input { width: 100%; padding: 18px 20px 18px 52px; font-size: 20px; font-weight: 600; border-radius: 16px; border: 1px solid var(--line); background: rgba(5, 3, 20, .7); outline: none; transition: .2s; }
+.topic-wrap input:focus { border-color: var(--cyan); box-shadow: 0 0 0 4px rgba(34, 230, 255, .15), 0 0 30px rgba(34, 230, 255, .2); }
+.topic-wrap .sparkle { position: absolute; left: 18px; top: 50%; transform: translateY(-50%); font-size: 20px; }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.chip { padding: 8px 13px; border-radius: 999px; border: 1px solid var(--line); background: rgba(255, 255, 255, .03); font-size: 13.5px; transition: .18s; }
+.chip:hover { border-color: var(--pink); background: rgba(255, 63, 216, .12); transform: translateY(-1px); }
+.row3 { display: grid; grid-template-columns: 1.3fr 1fr 1fr; gap: 18px; }
+@media (max-width: 760px) { .row3 { grid-template-columns: 1fr; } }
+.seg { display: flex; padding: 4px; border-radius: 14px; background: rgba(5, 3, 20, .7); border: 1px solid var(--line); gap: 4px; }
+.seg button { flex: 1; border: 0; background: transparent; padding: 10px 6px; border-radius: 10px; font-weight: 600; font-size: 14px; color: var(--muted); transition: .18s; white-space: nowrap; }
+.seg button:hover { color: var(--ink); }
+.seg button.on { color: #12052b; background: linear-gradient(135deg, var(--cyan), var(--violet) 60%, var(--pink)); box-shadow: 0 0 18px rgba(139, 92, 255, .55); }
+.mode-desc { font-size: 12.5px; color: var(--muted); margin-top: 8px; min-height: 16px; }
+.go { position: relative; width: 100%; padding: 20px; border: 0; border-radius: 18px; font-family: var(--display); font-weight: 900; font-size: 22px; letter-spacing: .22em; color: #12052b;
+  background: linear-gradient(90deg, var(--cyan), var(--violet), var(--pink), var(--amber), var(--cyan)); background-size: 300% 100%; animation: flow 6s linear infinite;
+  box-shadow: 0 0 40px rgba(255, 63, 216, .45), 0 10px 30px rgba(0, 0, 0, .4); transition: transform .15s; }
+.go:hover { transform: translateY(-2px) scale(1.01); }
+.go:active { transform: scale(.99); }
+@keyframes flow { to { background-position: 300% 0; } }
+.sub-row { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; font-size: 13px; color: var(--muted); }
+.link { background: none; border: 0; color: var(--cyan); padding: 0; font-size: 13px; text-decoration: underline; text-underline-offset: 3px; }
+
+.board { margin-top: 22px; padding: 20px 24px; }
+.board h3 { margin: 0 0 12px; font-family: var(--display); font-size: 13px; letter-spacing: .25em; color: var(--amber); }
+.board ol { margin: 0; padding: 0; list-style: none; display: grid; gap: 6px; }
+.board li { display: grid; grid-template-columns: 28px 1fr auto auto; gap: 12px; align-items: center; padding: 9px 12px; border-radius: 12px; background: rgba(255, 255, 255, .03); font-size: 14px; }
+.board li .rk { font-family: var(--display); color: var(--muted); }
+.board li:nth-child(1) .rk { color: var(--amber); } .board li:nth-child(2) .rk { color: #d7dcff; } .board li:nth-child(3) .rk { color: #ff9f5a; }
+.board li .meta { color: var(--muted); font-size: 12px; }
+.board li .pts { font-family: var(--display); font-weight: 800; color: var(--cyan); }
+.board .empty { color: var(--muted); font-size: 14px; }
+
+/* ---------- loading ---------- */
+.loading { flex: 1; display: grid; place-items: center; text-align: center; padding: 40px 0; }
+.orbit { position: relative; width: 150px; height: 150px; margin: 0 auto 28px; }
+.orbit i { position: absolute; inset: 0; border-radius: 50%; border: 2px solid transparent; }
+.orbit i:nth-child(1) { border-top-color: var(--cyan); border-right-color: var(--cyan); animation: spin 1.1s linear infinite; filter: drop-shadow(0 0 8px var(--cyan)); }
+.orbit i:nth-child(2) { inset: 18px; border-bottom-color: var(--pink); border-left-color: var(--pink); animation: spin 1.6s linear infinite reverse; filter: drop-shadow(0 0 8px var(--pink)); }
+.orbit i:nth-child(3) { inset: 38px; border-top-color: var(--amber); animation: spin .8s linear infinite; filter: drop-shadow(0 0 8px var(--amber)); }
+.orbit b { position: absolute; inset: 0; display: grid; place-items: center; font-family: var(--display); font-size: 30px; font-weight: 900; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.loading h2 { font-family: var(--display); letter-spacing: .2em; font-size: 20px; margin: 0 0 10px; }
+.loading p { color: var(--muted); margin: 0 0 22px; min-height: 22px; }
+.btn { padding: 11px 18px; border-radius: 12px; border: 1px solid var(--line); background: rgba(255, 255, 255, .05); font-weight: 600; transition: .18s; }
+.btn:hover { border-color: var(--cyan); background: rgba(34, 230, 255, .1); }
+.btn.primary { border: 0; color: #12052b; background: linear-gradient(135deg, var(--cyan), var(--violet) 70%, var(--pink)); box-shadow: 0 0 22px rgba(139, 92, 255, .5); }
+.btn.primary:hover { filter: brightness(1.1); }
+
+/* ---------- game ---------- */
+.hud { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 14px; margin-bottom: 16px; }
+.hud .stat { font-family: var(--mono); font-size: 11px; letter-spacing: .18em; color: var(--muted); text-transform: uppercase; }
+.hud .stat b { display: block; font-family: var(--display); font-size: 26px; letter-spacing: .04em; color: var(--ink); margin-top: 4px; }
+.hud .right { text-align: right; }
+.score-val { background: linear-gradient(90deg, var(--cyan), var(--pink)); -webkit-background-clip: text; background-clip: text; color: transparent !important; }
+.ring { position: relative; width: 92px; height: 92px; }
+.ring svg { width: 100%; height: 100%; transform: rotate(-90deg); overflow: visible; }
+.ring circle { fill: none; stroke-width: 7; }
+.ring .track { stroke: rgba(255, 255, 255, .08); }
+.ring .prog { stroke: var(--cyan); stroke-linecap: round; filter: drop-shadow(0 0 6px currentColor); transition: stroke .3s; }
+.ring .num { position: absolute; inset: 0; display: grid; place-items: center; font-family: var(--display); font-weight: 900; font-size: 28px; }
+.ring.warn .prog { stroke: var(--amber); } .ring.danger .prog { stroke: var(--red); } .ring.danger .num { color: var(--red); animation: pulse .5s ease-in-out infinite alternate; }
+.ring.frozen .prog { stroke: #9be7ff; } .ring.frozen .num { color: #9be7ff; }
+.ring.zen .prog { stroke: var(--violet); }
+@keyframes pulse { to { transform: scale(1.15); } }
+.progress { display: flex; gap: 5px; margin-bottom: 16px; }
+.progress span { flex: 1; height: 6px; border-radius: 6px; background: rgba(255, 255, 255, .08); transition: .3s; }
+.progress span.cur { background: linear-gradient(90deg, var(--cyan), var(--violet)); box-shadow: 0 0 10px var(--cyan); }
+.progress span.ok { background: var(--lime); box-shadow: 0 0 8px rgba(182, 255, 59, .6); }
+.progress span.bad { background: var(--red); }
+.progress span.pending { background: repeating-linear-gradient(90deg, rgba(255,255,255,.12) 0 4px, transparent 4px 8px); }
+.qcard { padding: 28px 28px 24px; position: relative; overflow: hidden; }
+.qcard::before { content: ""; position: absolute; inset: -1px; border-radius: inherit; padding: 1px; background: linear-gradient(135deg, rgba(34, 230, 255, .6), transparent 40%, transparent 60%, rgba(255, 63, 216, .6));
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask-composite: exclude; pointer-events: none; }
+.qmeta { flex-wrap: wrap; display: flex; justify-content: space-between; gap: 10px; font-family: var(--mono); font-size: 11px; letter-spacing: .2em; color: var(--muted); text-transform: uppercase; margin-bottom: 14px; }
+.qmeta .streak { color: var(--amber); }
+.qtext { font-size: clamp(21px, 3.1vw, 29px); font-weight: 700; line-height: 1.3; margin: 0 0 22px; min-height: 2.6em; }
+.answers { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+@media (max-width: 640px) { .answers { grid-template-columns: 1fr; } }
+.ans { position: relative; display: flex; align-items: center; gap: 14px; text-align: left; padding: 16px 16px; border-radius: 16px; border: 1px solid var(--line); background: rgba(5, 3, 20, .55); font-size: 16.5px; font-weight: 600; transition: transform .15s, border-color .15s, background .15s, opacity .3s, box-shadow .2s; animation: pop .4s cubic-bezier(.2, .9, .3, 1.3) both; }
+.ans:nth-child(2) { animation-delay: .05s; } .ans:nth-child(3) { animation-delay: .1s; } .ans:nth-child(4) { animation-delay: .15s; }
+@keyframes pop { from { opacity: 0; transform: translateY(10px) scale(.96); } }
+.ans .k { flex: 0 0 34px; height: 34px; border-radius: 10px; display: grid; place-items: center; font-family: var(--display); font-weight: 900; font-size: 14px; color: #12052b; }
+.ans:nth-child(1) .k { background: var(--cyan); } .ans:nth-child(2) .k { background: var(--pink); } .ans:nth-child(3) .k { background: var(--amber); } .ans:nth-child(4) .k { background: var(--lime); }
+.ans:not(:disabled):hover { transform: translateY(-2px); border-color: rgba(255, 255, 255, .45); background: rgba(139, 92, 255, .14); box-shadow: 0 8px 26px rgba(139, 92, 255, .25); }
+.ans:disabled { cursor: default; }
+.ans.gone { opacity: .12; filter: grayscale(1); }
+.ans.correct { border-color: var(--lime); background: rgba(182, 255, 59, .14); box-shadow: 0 0 0 2px var(--lime), 0 0 30px rgba(182, 255, 59, .35); }
+.ans.wrong { border-color: var(--red); background: rgba(255, 77, 109, .14); box-shadow: 0 0 0 2px var(--red); animation: shake .4s; }
+.ans.dim { opacity: .4; }
+@keyframes shake { 20%, 60% { transform: translateX(-6px); } 40%, 80% { transform: translateX(6px); } }
+.lifelines { display: flex; gap: 10px; margin-top: 18px; flex-wrap: wrap; }
+.life { display: inline-flex; align-items: center; gap: 8px; padding: 9px 14px; border-radius: 999px; border: 1px solid var(--line); background: rgba(255, 255, 255, .04); font-size: 13.5px; font-weight: 600; transition: .18s; }
+.life:not(:disabled):hover { border-color: var(--amber); background: rgba(255, 201, 60, .1); }
+.life:disabled { opacity: .35; cursor: not-allowed; }
+.life .n { font-family: var(--mono); font-size: 11px; padding: 2px 7px; border-radius: 999px; background: rgba(255, 255, 255, .1); }
+.hint { margin-top: 14px; padding: 12px 16px; border-radius: 14px; border: 1px dashed rgba(255, 201, 60, .5); background: rgba(255, 201, 60, .07); color: #ffe7a6; font-size: 15px; animation: enter .3s; }
+.reveal { margin-top: 18px; padding: 18px 20px; border-radius: 16px; background: rgba(5, 3, 20, .6); border: 1px solid var(--line); display: grid; grid-template-columns: 1fr auto; gap: 16px; align-items: center; animation: enter .35s; }
+.reveal .verdict { font-family: var(--display); font-weight: 900; letter-spacing: .14em; font-size: 18px; margin-bottom: 6px; }
+.reveal .verdict.ok { color: var(--lime); text-shadow: 0 0 16px rgba(182, 255, 59, .5); }
+.reveal .verdict.bad { color: var(--red); }
+.reveal .explain { color: #d6d3f5; font-size: 15px; line-height: 1.5; }
+.reveal .gain { font-family: var(--mono); color: var(--amber); font-size: 12px; margin-top: 6px; letter-spacing: .08em; }
+@media (max-width: 640px) { .reveal { grid-template-columns: 1fr; } }
+.waiting { text-align: center; color: var(--muted); padding: 40px 0; }
+.float-pts { position: fixed; z-index: 45; pointer-events: none; font-family: var(--display); font-weight: 900; font-size: 30px; color: var(--lime); text-shadow: 0 0 18px rgba(182, 255, 59, .8); animation: rise 1.1s ease-out forwards; }
+@keyframes rise { to { transform: translateY(-80px) scale(1.3); opacity: 0; } }
+.game-foot { display: flex; justify-content: space-between; margin-top: 16px; color: var(--muted); font-size: 12.5px; font-family: var(--mono); }
+.kbd { padding: 1px 6px; border-radius: 5px; border: 1px solid var(--line); background: rgba(255,255,255,.05); }
+
+/* ---------- results ---------- */
+.results { text-align: center; }
+.grade { font-family: var(--display); font-weight: 900; font-size: clamp(90px, 18vw, 150px); line-height: 1; margin: 8px 0 0;
+  background: linear-gradient(180deg, #fff, var(--amber) 45%, var(--pink)); -webkit-background-clip: text; background-clip: text; color: transparent; filter: drop-shadow(0 0 30px rgba(255, 201, 60, .5)); }
+.grade-sub { font-family: var(--display); letter-spacing: .3em; color: var(--muted); font-size: 13px; }
+.final-score { font-family: var(--display); font-weight: 900; font-size: 44px; margin: 16px 0 4px; }
+.newbest { display: inline-block; margin-top: 6px; padding: 5px 12px; border-radius: 999px; background: linear-gradient(90deg, var(--amber), var(--pink)); color: #12052b; font-weight: 800; font-size: 12px; letter-spacing: .15em; animation: pulse .7s ease-in-out infinite alternate; }
+.stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin: 24px 0; }
+@media (max-width: 640px) { .stats { grid-template-columns: repeat(2, 1fr); } }
+.stats div { padding: 16px; border-radius: 16px; background: rgba(5, 3, 20, .55); border: 1px solid var(--line); }
+.stats b { display: block; font-family: var(--display); font-size: 24px; margin-bottom: 4px; }
+.stats span { font-family: var(--mono); font-size: 10.5px; letter-spacing: .18em; color: var(--muted); text-transform: uppercase; }
+.host { text-align: left; display: flex; gap: 14px; align-items: flex-start; padding: 18px 20px; margin-bottom: 20px; }
+.host .av { flex: 0 0 44px; height: 44px; border-radius: 14px; display: grid; place-items: center; font-size: 22px; background: conic-gradient(from 90deg, var(--cyan), var(--violet), var(--pink), var(--cyan)); box-shadow: 0 0 18px rgba(139, 92, 255, .6); }
+.host .who { font-family: var(--mono); font-size: 11px; letter-spacing: .2em; color: var(--muted); margin-bottom: 4px; }
+.host .say { font-size: 16px; line-height: 1.5; min-height: 24px; }
+.cursor { display: inline-block; width: 8px; height: 1.05em; vertical-align: -2px; background: var(--cyan); margin-left: 2px; animation: blink .8s steps(1) infinite; }
+@keyframes blink { 50% { opacity: 0; } }
+.actions { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-bottom: 26px; }
+.review { text-align: left; padding: 8px; }
+.review details { border-radius: 14px; }
+.review summary { list-style: none; cursor: pointer; padding: 14px 16px; display: flex; gap: 12px; align-items: center; border-radius: 14px; font-weight: 600; }
+.review summary::-webkit-details-marker { display: none; }
+.review summary:hover { background: rgba(255, 255, 255, .04); }
+.review .mk { flex: 0 0 26px; height: 26px; border-radius: 8px; display: grid; place-items: center; font-size: 13px; font-weight: 900; }
+.review .mk.ok { background: rgba(182, 255, 59, .18); color: var(--lime); } .review .mk.bad { background: rgba(255, 77, 109, .18); color: var(--red); }
+.review .body { padding: 0 16px 14px 54px; color: #d6d3f5; font-size: 14.5px; line-height: 1.55; }
+.review .body .a { color: var(--lime); font-weight: 600; } .review .body .y { color: var(--red); }
+
+/* ---------- modal ---------- */
+.modal-bg { position: fixed; inset: 0; z-index: 60; background: rgba(3, 1, 12, .7); backdrop-filter: blur(6px); display: grid; place-items: center; padding: 20px; animation: fade .2s; }
+@keyframes fade { from { opacity: 0; } }
+.modal { width: min(520px, 100%); padding: 26px; animation: enter .3s; }
+.modal h2 { margin: 0 0 6px; font-family: var(--display); letter-spacing: .14em; font-size: 20px; }
+.modal p { color: var(--muted); margin: 0 0 18px; font-size: 14.5px; line-height: 1.5; }
+.modal a { color: var(--cyan); }
+.field { margin-bottom: 16px; }
+.field input, .field select { width: 100%; padding: 13px 14px; border-radius: 12px; border: 1px solid var(--line); background: rgba(5, 3, 20, .75); outline: none; font-size: 15px; }
+.field input:focus, .field select:focus { border-color: var(--cyan); box-shadow: 0 0 0 3px rgba(34, 230, 255, .15); }
+.field select option { background: #120a2e; }
+.key-row { display: flex; gap: 8px; }
+.key-row input { font-family: var(--mono); font-size: 13.5px; }
+.check { display: flex; align-items: center; gap: 10px; font-size: 14px; color: var(--muted); margin-bottom: 16px; }
+.check input { width: 18px; height: 18px; accent-color: var(--pink); }
+.modal .foot { display: flex; gap: 10px; justify-content: flex-end; align-items: center; }
+.msg { font-size: 13.5px; margin-top: 12px; min-height: 18px; color: var(--muted); }
+.msg.good { color: var(--lime); } .msg.bad { color: var(--red); }
+.toasts { position: fixed; bottom: 22px; left: 50%; transform: translateX(-50%); z-index: 70; display: grid; gap: 8px; justify-items: center; }
+.toast { padding: 11px 18px; border-radius: 12px; background: rgba(20, 12, 50, .92); border: 1px solid var(--line); box-shadow: 0 10px 30px rgba(0, 0, 0, .5); font-size: 14px; animation: enter .25s; }
+.toast.bad { border-color: rgba(255, 77, 109, .6); }
+@media (max-width: 520px) { .brand { font-size: 13px; letter-spacing: .1em; } #keyText { font-size: 12px; } .pill { padding: 8px 11px; } .game-foot { flex-wrap: wrap; gap: 6px; } }
+footer.credit { margin-top: auto; padding-top: 30px; text-align: center; color: var(--muted); font-size: 12.5px; }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
+</style>
+</head>
+<body>
+<div class="sky"><div class="stars"></div><div class="sun"></div><div class="grid"></div></div>
+<div class="scan"></div>
+<canvas id="fx"></canvas>
+
+<div class="app">
+  <header class="top">
+    <button class="brand" id="homeBtn" title="Home"><span class="logo">✦</span>TRIVIA NOVA</button>
+    <div class="top-actions">
+      <button class="pill icon-btn" id="soundBtn" title="Toggle sound (M)">🔊</button>
+      <button class="pill" id="keyPill"><span class="dot" id="keyDot"></span><span id="keyText">Plug in key</span></button>
+    </div>
+  </header>
+
+  <!-- HOME -->
+  <main id="home" class="screen">
+    <section class="hero">
+      <h1>TRIVIA<span>NOVA</span></h1>
+      <p>Pick any topic. An AI writes a fresh quiz on the spot. Answer fast to rack up streaks.</p>
+    </section>
+    <section class="card setup">
+      <div>
+        <div class="label"><span>Topic</span><span id="modelTag"></span></div>
+        <div class="topic-wrap">
+          <span class="sparkle">✨</span>
+          <input id="topic" maxlength="120" autocomplete="off" placeholder="Try “80s arcade games”, “deep sea creatures”, “Taylor Swift”…" />
+        </div>
+        <div class="chips" id="chips"></div>
+      </div>
+      <div class="row3">
+        <div>
+          <div class="label">Difficulty</div>
+          <div class="seg" id="diffSeg"></div>
+        </div>
+        <div>
+          <div class="label">Questions</div>
+          <div class="seg" id="countSeg"></div>
+        </div>
+        <div>
+          <div class="label">Mode</div>
+          <div class="seg" id="modeSeg"></div>
+          <div class="mode-desc" id="modeDesc"></div>
+        </div>
+      </div>
+      <button class="go" id="startBtn">START GAME</button>
+      <div class="sub-row">
+        <span>Keys: <span class="kbd">1</span>–<span class="kbd">4</span> answer · <span class="kbd">Enter</span> next · <span class="kbd">M</span> mute</span>
+        <button class="link" id="settingsLink">Model &amp; key settings</button>
+      </div>
+    </section>
+    <section class="card board">
+      <h3>★ HALL OF FAME</h3>
+      <ol id="board"></ol>
+    </section>
+  </main>
+
+  <!-- LOADING -->
+  <main id="loading" class="screen loading" hidden>
+    <div>
+      <div class="orbit"><i></i><i></i><i></i><b>?</b></div>
+      <h2 id="loadTitle">FORGING QUESTIONS</h2>
+      <p id="loadLine">Warming up the quiz engine…</p>
+      <button class="btn" id="cancelLoad">Cancel</button>
+    </div>
+  </main>
+
+  <!-- GAME -->
+  <main id="game" class="screen" hidden>
+    <div class="hud">
+      <div class="stat">Score<b class="score-val" id="hudScore">0</b></div>
+      <div class="ring" id="ring">
+        <svg viewBox="0 0 100 100"><circle class="track" cx="50" cy="50" r="44" /><circle class="prog" id="ringProg" cx="50" cy="50" r="44" /></svg>
+        <div class="num" id="ringNum">20</div>
+      </div>
+      <div class="stat right">Streak<b id="hudStreak">0×</b></div>
+    </div>
+    <div class="progress" id="progress"></div>
+    <section class="card qcard" id="qcard">
+      <div class="qmeta"><span id="qNum">Question 1 / 10</span><span id="qTopic"></span></div>
+      <div id="qBody"></div>
+    </section>
+    <div class="game-foot"><span id="footInfo"></span><button class="link" id="quitBtn">Quit game</button></div>
+  </main>
+
+  <!-- RESULTS -->
+  <main id="results" class="screen results" hidden>
+    <div class="grade" id="grade">A</div>
+    <div class="grade-sub" id="gradeSub">GRADE</div>
+    <div class="final-score" id="finalScore">0</div>
+    <div id="bestTag"></div>
+    <div class="stats" id="stats"></div>
+    <div class="card host" id="host">
+      <div class="av">🎙️</div>
+      <div><div class="who">NOVA · YOUR AI HOST</div><div class="say" id="hostSay"></div></div>
+    </div>
+    <div class="actions">
+      <button class="btn primary" id="againBtn">Play again: same topic</button>
+      <button class="btn" id="newBtn">New topic</button>
+      <button class="btn" id="shareBtn">Copy result</button>
+    </div>
+    <section class="card review" id="review"></section>
+  </main>
+
+  <footer class="credit">Questions are written live by an AI model on <a href="https://fireworks.ai" target="_blank" rel="noopener" style="color:inherit">Fireworks AI</a> and can occasionally be wrong. Your key stays in your browser.</footer>
+</div>
+
+<!-- KEY / SETTINGS MODAL -->
+<div class="modal-bg" id="modalBg" hidden>
+  <div class="card modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <h2 id="modalTitle">PLUG IN YOUR KEY</h2>
+    <p>Paste a Fireworks AI API key to power the quiz. Get one at <a href="https://app.fireworks.ai/settings/users/api-keys" target="_blank" rel="noopener">fireworks.ai → API keys</a>. The key is only sent to <code>api.fireworks.ai</code>.</p>
+    <div class="field">
+      <div class="label">API key</div>
+      <div class="key-row">
+        <input id="keyInput" type="password" placeholder="fw_…" autocomplete="off" spellcheck="false" />
+        <button class="btn" id="eyeBtn" title="Show / hide">👁</button>
+      </div>
+    </div>
+    <div class="field">
+      <div class="label"><span>Question model</span><span id="modelCount"></span></div>
+      <select id="modelSelect"></select>
+    </div>
+    <label class="check"><input type="checkbox" id="rememberKey" checked /> Remember key on this device</label>
+    <div class="foot">
+      <button class="btn" id="forgetBtn">Forget key</button>
+      <button class="btn" id="closeModal">Close</button>
+      <button class="btn primary" id="saveKey">Connect</button>
+    </div>
+    <div class="msg" id="keyMsg"></div>
+  </div>
+</div>
+
+<div class="toasts" id="toasts"></div>
+
+<script>
+(() => {
+  "use strict";
+
+  const API = "https://api.fireworks.ai/inference/v1";
+  const PREFIX = "accounts/fireworks/models/";
+  const PREFERRED = ["kimi-k2-instruct-0905", "deepseek-v3p1", "gpt-oss-120b", "qwen3-235b-a22b-instruct-2507", "llama-v3p3-70b-instruct", "gpt-oss-20b"];
+  const NON_CHAT = /(embed|rerank|whisper|flux|sdxl|stable-diffusion|playground-v|japanese-stable|ssd-1b|segmind|image|tts|asr|vision-embed|guard)/i;
+  const LS = { key: "tn_key", model: "tn_model", sound: "tn_sound", prefs: "tn_prefs", board: "tn_board", seen: "tn_seen" };
+  const TOPICS = [
+    ["🎲", "Random mix"], ["🚀", "Space & astronomy"], ["🎬", "90s movies"], ["🎮", "Video games"], ["🧪", "Science"],
+    ["🏛️", "World history"], ["🌍", "Geography"], ["🎵", "Pop music"], ["🐙", "Weird animals"], ["🍕", "Food & cooking"],
+    ["⚽", "Sports"], ["🧙", "Fantasy books"], ["💻", "Tech & internet"], ["🧠", "Mythology"],
+  ];
+  const DIFFS = [
+    { id: "easy", label: "Easy", mult: 1, desc: "casual, widely known facts" },
+    { id: "medium", label: "Medium", mult: 1.5, desc: "moderately challenging, for regular trivia players" },
+    { id: "hard", label: "Hard", mult: 2, desc: "hard, for enthusiasts; avoid the most famous facts" },
+    { id: "insane", label: "Insane", mult: 3, desc: "extremely hard and obscure but still verifiable, for experts" },
+  ];
+  const COUNTS = [5, 10, 15];
+  const MODES = [
+    { id: "classic", label: "Classic", time: 20, mult: 1, desc: "20s per question · speed bonus" },
+    { id: "blitz", label: "Blitz", time: 8, mult: 2, desc: "8s per question · double points" },
+    { id: "zen", label: "Zen", time: 0, mult: 0.5, desc: "No timer · half points · relax" },
+  ];
+  const LOAD_LINES = [
+    "Consulting the oracle…", "Shuffling the multiverse…", "Fact-checking a dragon…", "Calibrating difficulty lasers…",
+    "Bribing the quizmaster…", "Polishing red herrings…", "Charging the buzzers…", "Inventing tricky wrong answers…",
+  ];
+
+  const $ = (s, el = document) => el.querySelector(s);
+  const store = {
+    get(k, d) { try { const v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); } catch { return d; } },
+    set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} },
+  };
+  const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  const fullId = (m) => (m.includes("/") ? m : PREFIX + m);
+  const shortId = (m) => (m.startsWith(PREFIX) ? m.slice(PREFIX.length) : m);
+  const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+  const shuffle = (a) => { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+  const norm = (s) => String(s).toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+
+  const prefs = Object.assign({ topic: "", diff: "medium", count: 10, mode: "classic" }, store.get(LS.prefs, {}));
+  const state = {
+    key: store.get(LS.key, "") || sessionStorage.getItem(LS.key) || "",
+    model: store.get(LS.model, "") || PREFERRED[0],
+    models: PREFERRED.slice(),
+    connected: false,
+    sound: store.get(LS.sound, true),
+    game: null,
+    pendingStart: false,
+  };
+
+  // ---------- toasts ----------
+  function toast(text, bad) {
+    const t = document.createElement("div");
+    t.className = "toast" + (bad ? " bad" : ""); t.textContent = text;
+    $("#toasts").appendChild(t);
+    setTimeout(() => t.remove(), bad ? 4200 : 2400);
+  }
+
+  // ---------- audio ----------
+  let actx = null;
+  function tone(freq, dur = 0.12, type = "sine", vol = 0.12, delay = 0) {
+    if (!state.sound) return;
+    try {
+      actx = actx || new (window.AudioContext || window.webkitAudioContext)();
+      const t0 = actx.currentTime + delay;
+      const o = actx.createOscillator(), g = actx.createGain();
+      o.type = type; o.frequency.setValueAtTime(freq, t0);
+      g.gain.setValueAtTime(0.0001, t0); g.gain.exponentialRampToValueAtTime(vol, t0 + 0.01); g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+      o.connect(g).connect(actx.destination); o.start(t0); o.stop(t0 + dur + 0.02);
+    } catch {}
+  }
+  const sfx = {
+    click: () => tone(660, 0.06, "square", 0.05),
+    correct: () => [523, 659, 784, 1047].forEach((f, i) => tone(f, 0.16, "triangle", 0.13, i * 0.07)),
+    wrong: () => { tone(160, 0.32, "sawtooth", 0.09); tone(120, 0.38, "sawtooth", 0.07, 0.08); },
+    tick: () => tone(1200, 0.04, "square", 0.04),
+    power: () => [880, 1320].forEach((f, i) => tone(f, 0.12, "sine", 0.1, i * 0.06)),
+    fanfare: () => [523, 659, 784, 659, 784, 1047].forEach((f, i) => tone(f, 0.2, "triangle", 0.12, i * 0.11)),
+  };
+  function paintSound() { $("#soundBtn").textContent = state.sound ? "🔊" : "🔇"; }
+
+  // ---------- confetti / fx ----------
+  const fx = $("#fx"), fctx = fx.getContext("2d");
+  let parts = [], fxRunning = false;
+  function sizeFx() { fx.width = innerWidth * devicePixelRatio; fx.height = innerHeight * devicePixelRatio; }
+  addEventListener("resize", sizeFx); sizeFx();
+  function burst(x, y, n = 80) {
+    if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const cols = ["#22e6ff", "#ff3fd8", "#8b5cff", "#b6ff3b", "#ffc93c"];
+    for (let i = 0; i < n; i++) {
+      const a = Math.random() * Math.PI * 2, s = 4 + Math.random() * 9;
+      parts.push({ x, y, vx: Math.cos(a) * s, vy: Math.sin(a) * s - 4, r: 3 + Math.random() * 5, c: cols[i % cols.length], life: 1, rot: Math.random() * 6, vr: (Math.random() - .5) * .4 });
+    }
+    if (!fxRunning) { fxRunning = true; requestAnimationFrame(fxLoop); }
+  }
+  function fxLoop() {
+    const d = devicePixelRatio;
+    fctx.clearRect(0, 0, fx.width, fx.height);
+    parts = parts.filter((p) => p.life > 0);
+    for (const p of parts) {
+      p.x += p.vx; p.y += p.vy; p.vy += 0.28; p.vx *= 0.985; p.life -= 0.012; p.rot += p.vr;
+      fctx.save(); fctx.globalAlpha = Math.max(p.life, 0); fctx.translate(p.x * d, p.y * d); fctx.rotate(p.rot);
+      fctx.fillStyle = p.c; fctx.shadowColor = p.c; fctx.shadowBlur = 10; fctx.fillRect(-p.r * d / 2, -p.r * d / 4, p.r * d, p.r * d / 2); fctx.restore();
+    }
+    if (parts.length) requestAnimationFrame(fxLoop); else { fxRunning = false; fctx.clearRect(0, 0, fx.width, fx.height); }
+  }
+  function floatPts(text, el) {
+    const r = el.getBoundingClientRect();
+    const f = document.createElement("div");
+    f.className = "float-pts"; f.textContent = text;
+    f.style.left = r.left + r.width / 2 - 40 + "px"; f.style.top = r.top - 10 + "px";
+    document.body.appendChild(f); setTimeout(() => f.remove(), 1200);
+  }
+
+  // ---------- screens ----------
+  function show(id) {
+    for (const s of ["home", "loading", "game", "results"]) $("#" + s).hidden = s !== id;
+    scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  // ---------- setup UI ----------
+  function seg(el, items, cur, onPick) {
+    el.innerHTML = items.map((it) => `<button data-v="${esc(it.v)}" class="${String(it.v) === String(cur) ? "on" : ""}">${esc(it.label)}</button>`).join("");
+    el.onclick = (e) => {
+      const b = e.target.closest("button"); if (!b) return;
+      sfx.click();
+      el.querySelectorAll("button").forEach((x) => x.classList.toggle("on", x === b));
+      onPick(b.dataset.v);
+    };
+  }
+  function savePrefs() { store.set(LS.prefs, prefs); }
+  function initSetup() {
+    $("#topic").value = prefs.topic;
+    $("#chips").innerHTML = TOPICS.map(([e, t]) => `<button class="chip" data-t="${esc(t)}">${e} ${esc(t)}</button>`).join("");
+    $("#chips").onclick = (e) => { const b = e.target.closest(".chip"); if (!b) return; sfx.click(); $("#topic").value = b.dataset.t; $("#topic").focus(); };
+    seg($("#diffSeg"), DIFFS.map((d) => ({ v: d.id, label: d.label })), prefs.diff, (v) => { prefs.diff = v; savePrefs(); });
+    seg($("#countSeg"), COUNTS.map((c) => ({ v: c, label: c })), prefs.count, (v) => { prefs.count = +v; savePrefs(); });
+    seg($("#modeSeg"), MODES.map((m) => ({ v: m.id, label: m.label })), prefs.mode, (v) => { prefs.mode = v; savePrefs(); paintModeDesc(); });
+    paintModeDesc();
+  }
+  function paintModeDesc() { $("#modeDesc").textContent = MODES.find((m) => m.id === prefs.mode).desc; }
+
+  // ---------- leaderboard ----------
+  function getBoard() { return store.get(LS.board, []); }
+  function paintBoard() {
+    const b = getBoard();
+    $("#board").innerHTML = b.length
+      ? b.slice(0, 8).map((r, i) => `<li><span class="rk">${i + 1}</span><span>${esc(r.topic)}<div class="meta">${esc(r.diff)} · ${esc(r.mode)} · ${r.correct}/${r.total} · ${new Date(r.at).toLocaleDateString()}</div></span><span class="meta">${esc(r.grade)}</span><span class="pts">${r.score.toLocaleString()}</span></li>`).join("")
+      : `<li class="empty" style="display:block;background:none;padding:0">No runs yet. Your best scores will glow here.</li>`;
+  }
+  function addToBoard(entry) {
+    const b = getBoard();
+    const best = b.length ? b[0].score : 0;
+    b.push(entry); b.sort((x, y) => y.score - x.score);
+    store.set(LS.board, b.slice(0, 25));
+    return entry.score > best && entry.score > 0;
+  }
+
+  // ---------- key & models ----------
+  function paintKey() {
+    $("#keyDot").className = "dot" + (state.key ? " ok" : "");
+    $("#keyText").textContent = state.key ? `Key ••••${state.key.slice(-4)}` : "Plug in key";
+    $("#modelTag").textContent = state.key ? `⚡ ${shortId(state.model)}` : "";
+  }
+  function fillModels() {
+    const list = state.models.includes(state.model) ? state.models : [state.model, ...state.models];
+    $("#modelSelect").innerHTML = list.map((m) => `<option value="${esc(m)}" ${m === state.model ? "selected" : ""}>${esc(m)}</option>`).join("");
+    $("#modelCount").textContent = state.connected ? `${state.models.length} available` : "";
+  }
+  async function apiError(res) {
+    let msg = `HTTP ${res.status}`;
+    try { const j = await res.json(); msg = j.error?.message || j.message || j.detail || msg; } catch {}
+    if (res.status === 401 || res.status === 403) msg = "That key was rejected. Double-check it on fireworks.ai.";
+    if (res.status === 429) msg = "Rate limited by Fireworks. Wait a moment and try again.";
+    return new Error(msg);
+  }
+  async function loadModels(key) {
+    const res = await fetch(`${API}/models`, { headers: { Authorization: `Bearer ${key}` } });
+    if (!res.ok) throw await apiError(res);
+    const j = await res.json();
+    const ids = [...new Set((j.data || []).map((m) => m.id).filter((id) => id && !NON_CHAT.test(id)).map(shortId))];
+    const pref = PREFERRED.filter((p) => ids.includes(p));
+    return [...pref, ...ids.filter((i) => !pref.includes(i)).sort()];
+  }
+  function openModal(reason) {
+    $("#keyInput").value = state.key;
+    $("#keyMsg").className = "msg"; $("#keyMsg").textContent = reason || "";
+    $("#modalTitle").textContent = state.key ? "SETTINGS" : "PLUG IN YOUR KEY";
+    $("#saveKey").textContent = state.key ? "Save" : "Connect";
+    fillModels();
+    $("#modalBg").hidden = false;
+    setTimeout(() => (state.key ? $("#modelSelect") : $("#keyInput")).focus(), 50);
+  }
+  function closeModal() { $("#modalBg").hidden = true; state.pendingStart = false; }
+  async function saveKey() {
+    const key = $("#keyInput").value.trim();
+    const msg = $("#keyMsg");
+    if (!key) { msg.className = "msg bad"; msg.textContent = "Paste your Fireworks API key first."; return; }
+    const chosen = $("#modelSelect").value;
+    msg.className = "msg"; msg.textContent = "Connecting to api.fireworks.ai…";
+    $("#saveKey").disabled = true;
+    try {
+      const models = await loadModels(key);
+      state.key = key; state.connected = true;
+      if (models.length) {
+        state.models = models;
+        state.model = models.includes(chosen) ? chosen : (models.includes(state.model) ? state.model : models[0]);
+      } else state.model = chosen || state.model;
+      if ($("#rememberKey").checked) { store.set(LS.key, key); sessionStorage.removeItem(LS.key); }
+      else { localStorage.removeItem(LS.key); sessionStorage.setItem(LS.key, key); }
+      store.set(LS.model, state.model);
+      fillModels(); paintKey();
+      msg.className = "msg good"; msg.textContent = `Connected. Using ${shortId(state.model)}.`;
+      sfx.power();
+      const go = state.pendingStart;
+      setTimeout(() => { closeModal(); if (go) startGame(); }, 500);
+    } catch (e) {
+      msg.className = "msg bad"; msg.textContent = `Couldn't connect: ${e.message}`;
+    } finally { $("#saveKey").disabled = false; }
+  }
+
+  // ---------- question generation (streamed JSON lines) ----------
+  function stripThink(t) {
+    t = t.replace(/<think>[\s\S]*?<\/think>/g, "");
+    const open = t.indexOf("<think>");
+    return open >= 0 ? t.slice(0, open) : t;
+  }
+  function extractObjects(text, from) {
+    const out = [];
+    let i = from, depth = 0, start = -1, inStr = false, escp = false;
+    for (; i < text.length; i++) {
+      const c = text[i];
+      if (inStr) { if (escp) escp = false; else if (c === "\\") escp = true; else if (c === '"') inStr = false; continue; }
+      if (c === '"') { inStr = true; continue; }
+      if (c === "{") { if (depth === 0) start = i; depth++; }
+      else if (c === "}" && depth > 0) { depth--; if (depth === 0) { out.push(text.slice(start, i + 1)); from = i + 1; } }
+    }
+    return { objs: out, next: depth === 0 ? i : from };
+  }
+  function toQuestion(raw) {
+    let o; try { o = JSON.parse(raw); } catch { return null; }
+    if (Array.isArray(o.questions)) return null;
+    const q = String(o.q || o.question || "").trim();
+    let opts = (o.options || o.choices || []).map((x) => String(x).replace(/^\s*[A-Da-d][\).:]\s+/, "").trim()).filter(Boolean);
+    let ans = o.answer;
+    if (typeof ans === "string") {
+      const idx = /^[A-Da-d]$/.test(ans.trim()) ? "abcd".indexOf(ans.trim().toLowerCase()) : opts.findIndex((x) => norm(x) === norm(ans));
+      ans = idx;
+    }
+    if (!q || opts.length !== 4 || !(ans >= 0 && ans < 4)) return null;
+    if (new Set(opts.map(norm)).size !== 4) return null;
+    const correct = opts[ans];
+    shuffle(opts);
+    return { q, options: opts, answer: opts.indexOf(correct), hint: String(o.hint || "").trim(), explain: String(o.explain || o.explanation || "").trim() };
+  }
+  function buildPrompt(topic, diff, n, avoid) {
+    const t = /^random/i.test(topic) ? "a random mix of general-knowledge categories (science, history, pop culture, geography, nature, sports, arts)" : `"${topic}"`;
+    return [
+      { role: "system", content: "You are NOVA, a witty, meticulous trivia writer. You only output JSON Lines: one compact JSON object per line, nothing else. No markdown, no code fences, no commentary." },
+      { role: "user", content:
+`Write ${n} multiple-choice trivia questions about ${t}.
+Difficulty: ${diff.label}: ${diff.desc}.
+
+Rules:
+- Each question has exactly 4 short options (max ~8 words each) and exactly ONE correct answer.
+- Facts must be accurate and unambiguous. Wrong options must be plausible but clearly wrong.
+- Cover a varied spread of sub-topics; never repeat a fact. No "all/none of the above".
+- "hint": a nudge that helps without naming the answer.
+- "explain": 1-2 sentence fun fact explaining the correct answer.
+${avoid.length ? `- Do NOT reuse these previously asked questions:\n${avoid.map((a) => "  * " + a).join("\n")}\n` : ""}
+Output exactly ${n} lines, each like:
+{"q":"question text","options":["A","B","C","D"],"answer":0,"hint":"...","explain":"..."}
+("answer" is the 0-based index of the correct option.)` },
+    ];
+  }
+  async function streamQuestions(game) {
+    const diff = DIFFS.find((d) => d.id === game.diff);
+    const seen = store.get(LS.seen, {});
+    const key = norm(game.topic);
+    const avoid = (seen[key] || []).slice(-25);
+    const body = {
+      model: fullId(state.model), messages: buildPrompt(game.topic, diff, game.total + 2, avoid),
+      stream: true, temperature: 0.9, top_p: 0.95, max_tokens: 6000,
+    };
+    if (/gpt-oss/.test(state.model)) body.reasoning_effort = "low";
+    let res = await fetch(`${API}/chat/completions`, {
+      method: "POST", signal: game.ctrl.signal,
+      headers: { Authorization: `Bearer ${state.key}`, "Content-Type": "application/json", Accept: "text/event-stream" },
+      body: JSON.stringify(body),
+    });
+    if (res.status === 400 && body.reasoning_effort) {
+      delete body.reasoning_effort;
+      res = await fetch(`${API}/chat/completions`, { method: "POST", signal: game.ctrl.signal, headers: { Authorization: `Bearer ${state.key}`, "Content-Type": "application/json", Accept: "text/event-stream" }, body: JSON.stringify(body) });
+    }
+    if (!res.ok) throw await apiError(res);
+    const reader = res.body.getReader(), dec = new TextDecoder();
+    let buf = "", text = "", cursor = 0;
+    const seenQ = new Set();
+    const ingest = () => {
+      const clean = stripThink(text);
+      const { objs, next } = extractObjects(clean, cursor);
+      cursor = next;
+      for (const raw of objs) {
+        if (game.questions.length >= game.total) break;
+        const q = toQuestion(raw);
+        if (!q || seenQ.has(norm(q.q))) continue;
+        seenQ.add(norm(q.q));
+        game.questions.push(q);
+        onQuestionArrived(game);
+      }
+    };
+    for (;;) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buf += dec.decode(value, { stream: true });
+      let nl;
+      while ((nl = buf.indexOf("\n")) >= 0) {
+        const line = buf.slice(0, nl).trim(); buf = buf.slice(nl + 1);
+        if (!line.startsWith("data:")) continue;
+        const data = line.slice(5).trim();
+        if (!data || data === "[DONE]") continue;
+        let j; try { j = JSON.parse(data); } catch { continue; }
+        if (j.error) throw new Error(j.error.message || "Stream error");
+        const c = j.choices?.[0]?.delta?.content || "";
+        if (c) { text += c; ingest(); }
+      }
+      if (game.questions.length >= game.total) { try { game.ctrl.abort(); } catch {} break; }
+    }
+    if (!text.trim() && !game.questions.length) throw new Error("The model returned an empty response. Try another model in settings.");
+  }
+
+  // ---------- game flow ----------
+  let loadTimer = null;
+  function startLoadingLines() {
+    let i = Math.floor(Math.random() * LOAD_LINES.length);
+    $("#loadLine").textContent = LOAD_LINES[i];
+    clearInterval(loadTimer);
+    loadTimer = setInterval(() => { i = (i + 1) % LOAD_LINES.length; $("#loadLine").textContent = LOAD_LINES[i]; }, 1600);
+  }
+  function startGame(topicOverride) {
+    if (!state.key) { state.pendingStart = true; openModal("Plug in a Fireworks key to start playing."); return; }
+    const topic = (topicOverride || $("#topic").value).trim() || "Random mix";
+    $("#topic").value = topic; prefs.topic = topic; savePrefs();
+    if (state.game) { try { state.game.ctrl.abort(); } catch {} stopTimer(); }
+    const mode = MODES.find((m) => m.id === prefs.mode);
+    const game = state.game = {
+      topic, diff: prefs.diff, mode, total: prefs.count, questions: [], idx: -1, score: 0, streak: 0, bestStreak: 0, correct: 0,
+      log: [], life: { fifty: 1, hint: 2, freeze: 1 }, ctrl: new AbortController(), genDone: false, genError: null, started: false, waiting: false,
+    };
+    $("#loadTitle").textContent = "FORGING QUESTIONS";
+    show("loading"); startLoadingLines(); sfx.power();
+    streamQuestions(game).then(() => {
+      game.genDone = true;
+      if (state.game !== game) return;
+      if (game.questions.length < game.total) {
+        game.total = game.questions.length;
+        if (!game.total) return failGen(game, new Error("Couldn't parse any questions from the model. Try again or switch models."));
+        paintProgress();
+        if (game.waiting) finish();
+      }
+    }).catch((e) => {
+      game.genDone = true;
+      if (state.game !== game) return;
+      if (e.name === "AbortError" && game.questions.length >= game.total) return;
+      if (e.name === "AbortError") return;
+      if (game.questions.length) {
+        game.total = game.questions.length; paintProgress();
+        toast(`Generation stopped early (${e.message}). Playing ${game.total} questions.`, true);
+        if (game.waiting) finish();
+      } else failGen(game, e);
+    });
+  }
+  function failGen(game, e) {
+    clearInterval(loadTimer);
+    state.game = null;
+    show("home");
+    toast(e.message || String(e), true);
+    if (/key was rejected/i.test(e.message)) openModal(e.message);
+  }
+  function onQuestionArrived(game) {
+    if (state.game !== game) return;
+    if (!game.started) { game.started = true; clearInterval(loadTimer); show("game"); nextQuestion(); }
+    else if (game.waiting) { game.waiting = false; nextQuestion(); }
+    else paintProgress();
+  }
+
+  function paintProgress() {
+    const g = state.game; if (!g) return;
+    $("#progress").innerHTML = Array.from({ length: g.total }, (_, i) => {
+      const l = g.log[i];
+      const cls = l ? (l.ok ? "ok" : "bad") : i === g.idx ? "cur" : i >= g.questions.length ? "pending" : "";
+      return `<span class="${cls}"></span>`;
+    }).join("");
+    $("#hudScore").textContent = g.score.toLocaleString();
+    $("#hudStreak").textContent = `${g.streak}×`;
+    $("#qTopic").textContent = `${g.topic} · ${DIFFS.find((d) => d.id === g.diff).label}`;
+    $("#footInfo").textContent = `⚡ ${shortId(state.model)}${g.genDone ? "" : ` · ${g.questions.length}/${g.total} ready`}`;
+  }
+
+  function nextQuestion() {
+    const g = state.game;
+    g.idx++;
+    if (g.idx >= g.total) return finish();
+    if (g.idx >= g.questions.length) {
+      if (g.genDone) return finish();
+      g.waiting = true; g.idx--;
+      $("#qBody").innerHTML = `<div class="waiting"><div class="orbit" style="width:70px;height:70px;margin-bottom:14px"><i></i><i></i><i></i></div>The AI is still writing the next question…</div>`;
+      setRing(1, "…", ""); return;
+    }
+    g.locked = false; g.hintShown = false;
+    const q = g.questions[g.idx];
+    $("#qNum").textContent = `Question ${g.idx + 1} / ${g.total}`;
+    $("#qBody").innerHTML = `
+      <h2 class="qtext">${esc(q.q)}</h2>
+      <div class="answers">${q.options.map((o, i) => `<button class="ans" data-i="${i}"><span class="k">${"ABCD"[i]}</span><span>${esc(o)}</span></button>`).join("")}</div>
+      <div class="lifelines">
+        <button class="life" data-l="fifty">✂️ 50/50 <span class="n">${g.life.fifty}</span></button>
+        <button class="life" data-l="hint">💡 Hint <span class="n">${g.life.hint}</span></button>
+        ${g.mode.time ? `<button class="life" data-l="freeze">❄️ Freeze <span class="n">${g.life.freeze}</span></button>` : ""}
+      </div>
+      <div id="hintBox"></div><div id="revealBox"></div>`;
+    $("#qBody .answers").onclick = (e) => { const b = e.target.closest(".ans"); if (b && !b.disabled) answer(+b.dataset.i); };
+    $("#qBody .lifelines").onclick = (e) => { const b = e.target.closest(".life"); if (b && !b.disabled) useLife(b.dataset.l); };
+    paintLives(); paintProgress();
+    $("#qcard").classList.remove("screen"); void $("#qcard").offsetWidth; $("#qcard").classList.add("screen");
+    startTimer();
+  }
+  function paintLives() {
+    const g = state.game;
+    $("#qBody").querySelectorAll(".life").forEach((b) => {
+      const k = b.dataset.l, n = g.life[k];
+      b.querySelector(".n").textContent = n;
+      b.disabled = g.locked || n <= 0 || (k === "hint" && (g.hintShown || !g.questions[g.idx].hint)) || (k === "freeze" && g.frozen) || (k === "fifty" && g.fiftyUsed === g.idx);
+    });
+  }
+  function useLife(k) {
+    const g = state.game, q = g.questions[g.idx];
+    if (g.locked || g.life[k] <= 0) return;
+    g.life[k]--; sfx.power();
+    if (k === "fifty") {
+      g.fiftyUsed = g.idx;
+      const wrong = shuffle([0, 1, 2, 3].filter((i) => i !== q.answer)).slice(0, 2);
+      wrong.forEach((i) => { const b = $(`.ans[data-i="${i}"]`); b.classList.add("gone"); b.disabled = true; });
+    } else if (k === "hint") {
+      g.hintShown = true;
+      $("#hintBox").innerHTML = `<div class="hint">💡 ${esc(q.hint)}</div>`;
+    } else if (k === "freeze") {
+      g.frozen = true; $("#ring").classList.add("frozen"); $("#ringNum").textContent = "❄";
+    }
+    paintLives();
+  }
+
+  // ---------- timer ----------
+  const CIRC = 2 * Math.PI * 44;
+  $("#ringProg").style.strokeDasharray = CIRC;
+  let raf = 0;
+  function setRing(frac, label, cls) {
+    $("#ringProg").style.strokeDashoffset = CIRC * (1 - Math.max(0, Math.min(1, frac)));
+    $("#ringNum").textContent = label;
+    $("#ring").className = "ring " + (cls || "");
+  }
+  function startTimer() {
+    const g = state.game;
+    stopTimer(); g.frozen = false;
+    g.qStart = performance.now();
+    if (!g.mode.time) { setRing(1, "∞", "zen"); return; }
+    const total = g.mode.time * 1000;
+    g.timeLeft = total;
+    let lastSec = null;
+    const loop = (now) => {
+      if (state.game !== g || g.locked) return;
+      if (g.frozen) { raf = requestAnimationFrame(loop); return; }
+      const left = Math.max(0, total - (now - g.qStart));
+      g.timeLeft = left;
+      const sec = Math.ceil(left / 1000);
+      const frac = left / total;
+      setRing(frac, String(sec), frac < 0.25 ? "danger" : frac < 0.5 ? "warn" : "");
+      if (sec !== lastSec && sec <= 3 && sec > 0) sfx.tick();
+      lastSec = sec;
+      if (left <= 0) return answer(-1);
+      raf = requestAnimationFrame(loop);
+    };
+    raf = requestAnimationFrame(loop);
+  }
+  function stopTimer() { cancelAnimationFrame(raf); }
+
+  // ---------- answering ----------
+  function answer(i) {
+    const g = state.game;
+    if (!g || g.locked) return;
+    g.locked = true; stopTimer();
+    const q = g.questions[g.idx];
+    const ok = i === q.answer;
+    const diff = DIFFS.find((d) => d.id === g.diff);
+    let gain = 0, detail = "";
+    if (ok) {
+      g.streak++; g.correct++; g.bestStreak = Math.max(g.bestStreak, g.streak);
+      const base = 100 * diff.mult;
+      const speed = g.mode.time ? (g.timeLeft ?? 0) / (g.mode.time * 1000) : 0;
+      const streakMult = 1 + 0.25 * Math.min(g.streak - 1, 4);
+      gain = Math.round((base + base * speed) * streakMult * g.mode.mult / 5) * 5;
+      g.score += gain;
+      detail = `+${gain} pts · base ${Math.round(base)}${g.mode.time ? ` · speed +${Math.round(speed * 100)}%` : ""}${streakMult > 1 ? ` · streak ×${streakMult}` : ""}${g.mode.mult !== 1 ? ` · ${g.mode.label} ×${g.mode.mult}` : ""}`;
+    } else { g.streak = 0; }
+    g.log[g.idx] = { ok, picked: i, gain };
+
+    $("#qBody").querySelectorAll(".ans").forEach((b) => {
+      const bi = +b.dataset.i; b.disabled = true;
+      if (bi === q.answer) b.classList.add("correct");
+      else if (bi === i) b.classList.add("wrong");
+      else b.classList.add("dim");
+    });
+    paintLives();
+    const picked = i >= 0 ? $(`.ans[data-i="${i}"]`) : null;
+    if (ok) {
+      sfx.correct();
+      const r = picked.getBoundingClientRect();
+      burst(r.left + r.width / 2, r.top + r.height / 2, g.streak >= 3 ? 120 : 60);
+      floatPts(`+${gain}`, picked);
+    } else sfx.wrong();
+    if (i === -1) setRing(0, "0", "danger");
+
+    const last = g.idx + 1 >= g.total;
+    const verdict = ok ? (g.streak >= 3 ? `CORRECT · ${g.streak} IN A ROW 🔥` : "CORRECT!") : i === -1 ? "TIME'S UP" : "NOT QUITE";
+    $("#revealBox").innerHTML = `
+      <div class="reveal">
+        <div>
+          <div class="verdict ${ok ? "ok" : "bad"}">${verdict}</div>
+          <div class="explain">${ok ? "" : `Answer: <b>${esc(q.options[q.answer])}</b>. `}${esc(q.explain)}</div>
+          ${ok ? `<div class="gain">${esc(detail)}</div>` : ""}
+        </div>
+        <button class="btn primary" id="nextBtn">${last ? "See results ➜" : "Next ➜"}</button>
+      </div>`;
+    $("#nextBtn").onclick = () => { sfx.click(); nextQuestion(); };
+    $("#nextBtn").focus({ preventScroll: true });
+    paintProgress();
+    remember(g.topic, q.q);
+  }
+  function remember(topic, q) {
+    const seen = store.get(LS.seen, {});
+    const k = norm(topic);
+    seen[k] = [...(seen[k] || []), q].slice(-40);
+    const keys = Object.keys(seen);
+    if (keys.length > 40) delete seen[keys[0]];
+    store.set(LS.seen, seen);
+  }
+
+  // ---------- results ----------
+  function gradeFor(p) { return p >= 0.95 ? "S" : p >= 0.8 ? "A" : p >= 0.65 ? "B" : p >= 0.5 ? "C" : p >= 0.3 ? "D" : "F"; }
+  const GRADE_SUB = { S: "LEGENDARY", A: "BRILLIANT", B: "SOLID RUN", C: "NOT BAD", D: "KEEP TRAINING", F: "THE QUIZ WON" };
+  function finish() {
+    const g = state.game; if (!g || g.finished) return;
+    g.finished = true; stopTimer();
+    try { g.ctrl.abort(); } catch {}
+    const answered = g.log.filter(Boolean).length || g.total;
+    const pct = g.correct / Math.max(1, answered);
+    const grade = gradeFor(pct);
+    $("#grade").textContent = grade;
+    $("#gradeSub").textContent = GRADE_SUB[grade];
+    const isBest = addToBoard({ score: g.score, topic: g.topic, diff: DIFFS.find((d) => d.id === g.diff).label, mode: g.mode.label, correct: g.correct, total: answered, grade, at: Date.now() });
+    $("#bestTag").innerHTML = isBest ? `<span class="newbest">★ NEW HIGH SCORE ★</span>` : "";
+    $("#stats").innerHTML = [
+      [`${g.correct}/${answered}`, "Correct"], [`${Math.round(pct * 100)}%`, "Accuracy"], [`${g.bestStreak}×`, "Best streak"], [DIFFS.find((d) => d.id === g.diff).label, g.mode.label],
+    ].map(([b, s]) => `<div><b>${esc(b)}</b><span>${esc(s)}</span></div>`).join("");
+    $("#review").innerHTML = g.questions.slice(0, answered).map((q, i) => {
+      const l = g.log[i] || { ok: false, picked: -1 };
+      return `<details><summary><span class="mk ${l.ok ? "ok" : "bad"}">${l.ok ? "✓" : "✕"}</span>${esc(q.q)}</summary>
+        <div class="body"><div>Answer: <span class="a">${esc(q.options[q.answer])}</span>${!l.ok ? ` · You: <span class="y">${l.picked >= 0 ? esc(q.options[l.picked]) : "no answer"}</span>` : ""}</div><div>${esc(q.explain)}</div></div></details>`;
+    }).join("");
+    show("results"); paintBoard();
+    animateNumber($("#finalScore"), g.score);
+    if (pct >= 0.65) { sfx.fanfare(); setTimeout(() => burst(innerWidth / 2, innerHeight * 0.3, 160), 250); }
+    hostSays(g, grade, pct);
+  }
+  function animateNumber(el, to) {
+    const t0 = performance.now(), dur = 1100;
+    const step = (now) => { const p = Math.min(1, (now - t0) / dur); el.textContent = Math.round(to * (1 - Math.pow(1 - p, 3))).toLocaleString() + " pts"; if (p < 1) requestAnimationFrame(step); };
+    requestAnimationFrame(step);
+  }
+  async function hostSays(g, grade, pct) {
+    const el = $("#hostSay");
+    el.innerHTML = `<span class="cursor"></span>`;
+    const misses = g.questions.filter((_, i) => g.log[i] && !g.log[i].ok).slice(0, 3).map((q) => q.q);
+    const fallback = pct >= 0.8 ? "Absolute brain on fire. The quiz never stood a chance." : pct >= 0.5 ? "Respectable! A couple more streaks and you're unstoppable." : "The questions won this round, but every legend starts somewhere. Run it back!";
+    let line = "";
+    try {
+      const body = {
+        model: fullId(state.model), max_tokens: 600, temperature: 1,
+        messages: [
+          { role: "system", content: "You are NOVA, a hype, witty retro-arcade game show host. Reply with 1-2 short sentences (max 40 words), playful, no hashtags, no emojis overload (max 1)." },
+          { role: "user", content: `A player just finished a ${g.diff} trivia game about "${g.topic}" in ${g.mode.label} mode. Score ${g.score}, ${g.correct}/${g.log.filter(Boolean).length} correct, grade ${grade}, best streak ${g.bestStreak}.${misses.length ? ` They missed: ${misses.join(" | ")}` : ""} Give them a fun sign-off reaction.` },
+        ],
+      };
+      if (/gpt-oss/.test(state.model)) body.reasoning_effort = "low";
+      const res = await fetch(`${API}/chat/completions`, { method: "POST", headers: { Authorization: `Bearer ${state.key}`, "Content-Type": "application/json" }, body: JSON.stringify(body) });
+      if (res.ok) { const j = await res.json(); line = stripThink(j.choices?.[0]?.message?.content || "").trim().replace(/^"|"$/g, ""); }
+    } catch {}
+    if (state.game !== g) return;
+    line = line || fallback;
+    let i = 0;
+    const type = () => { if (state.game !== g) return; i += 2; el.innerHTML = esc(line.slice(0, i)) + (i < line.length ? `<span class="cursor"></span>` : ""); if (i < line.length) setTimeout(type, 18); };
+    type();
+  }
+  async function share() {
+    const g = state.game; if (!g) return;
+    const squares = g.log.map((l) => (l && l.ok ? "🟩" : "🟥")).join("");
+    const text = `TRIVIA NOVA ✦ ${g.topic} (${DIFFS.find((d) => d.id === g.diff).label}, ${g.mode.label})\n${squares}\n${g.score.toLocaleString()} pts · grade ${$("#grade").textContent} · best streak ${g.bestStreak}×`;
+    try { await navigator.clipboard.writeText(text); toast("Result copied to clipboard"); } catch { toast("Couldn't access the clipboard", true); }
+  }
+  function goHome() {
+    if (state.game) { try { state.game.ctrl.abort(); } catch {} }
+    stopTimer(); clearInterval(loadTimer); state.game = null;
+    paintBoard(); show("home");
+  }
+
+  // ---------- wiring ----------
+  $("#startBtn").onclick = () => startGame();
+  $("#topic").addEventListener("keydown", (e) => { if (e.key === "Enter") startGame(); });
+  $("#keyPill").onclick = () => openModal();
+  $("#settingsLink").onclick = () => openModal();
+  $("#closeModal").onclick = closeModal;
+  $("#modalBg").addEventListener("mousedown", (e) => { if (e.target.id === "modalBg") closeModal(); });
+  $("#saveKey").onclick = saveKey;
+  $("#keyInput").addEventListener("keydown", (e) => { if (e.key === "Enter") saveKey(); });
+  $("#eyeBtn").onclick = () => { const k = $("#keyInput"); k.type = k.type === "password" ? "text" : "password"; };
+  $("#modelSelect").onchange = (e) => { if (state.key) { state.model = e.target.value; store.set(LS.model, state.model); paintKey(); } };
+  $("#forgetBtn").onclick = () => {
+    state.key = ""; state.connected = false; localStorage.removeItem(LS.key); sessionStorage.removeItem(LS.key);
+    $("#keyInput").value = ""; paintKey(); $("#keyMsg").className = "msg"; $("#keyMsg").textContent = "Key removed from this browser.";
+  };
+  $("#soundBtn").onclick = () => { state.sound = !state.sound; store.set(LS.sound, state.sound); paintSound(); sfx.click(); };
+  $("#homeBtn").onclick = goHome;
+  $("#cancelLoad").onclick = goHome;
+  $("#quitBtn").onclick = () => { if (confirm("Quit this game? Your progress will be lost.")) goHome(); };
+  $("#againBtn").onclick = () => startGame(state.game?.topic);
+  $("#newBtn").onclick = () => { goHome(); setTimeout(() => { $("#topic").select(); }, 50); };
+  $("#shareBtn").onclick = share;
+  document.addEventListener("keydown", (e) => {
+    if (e.target.matches("input, select, textarea")) return;
+    if (!$("#modalBg").hidden) { if (e.key === "Escape") closeModal(); return; }
+    if (e.key === "m" || e.key === "M") { $("#soundBtn").click(); return; }
+    const g = state.game;
+    if ($("#game").hidden || !g) return;
+    if (!g.locked) {
+      const idx = { 1: 0, 2: 1, 3: 2, 4: 3, a: 0, b: 1, c: 2, d: 3 }[e.key.toLowerCase()];
+      if (idx != null) { const b = $(`.ans[data-i="${idx}"]`); if (b && !b.disabled) answer(idx); }
+    } else if (e.key === "Enter" && $("#nextBtn") && document.activeElement !== $("#nextBtn")) { e.preventDefault(); $("#nextBtn").click(); }
+  });
+
+  initSetup(); paintBoard(); paintKey(); paintSound();
+  if (state.key) loadModels(state.key).then((m) => { if (m.length) { state.models = m; state.connected = true; if (!m.includes(state.model)) { state.model = m[0]; store.set(LS.model, state.model); } paintKey(); } }).catch(() => {});
+})();
+</script>
+</body>
+</html>
